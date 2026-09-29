@@ -21,8 +21,8 @@ PRODUCT_CATALOG = [
 
 # Biztonsági adatbázis: Token -> Partner adatai
 PARTNERS_DATABASE = {
-    "token_bolt1": {"nev": "Szombathelyi 4-es Bolt", "email": "snikee@gmail.com"},
-    "token_partner2": {"nev": "Győri Lerakat", "email": "hayhay4y@partner.hu"},
+    "token_snikee": {"nev": "Szombathelyi 4-es Bolt", "email": "snikee@gmail.com"},
+    "token_hayhay4y": {"nev": "Győri Lerakat", "email": "hayhay4y@partner.hu"},
     "token_videki": {"nev": "Vidéki Húsbolt", "email": "videki_husbolt@t-online.hu"}
 }
 
