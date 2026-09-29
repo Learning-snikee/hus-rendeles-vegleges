@@ -1,14 +1,14 @@
 import streamlit as st
 import pandas as pd
-from streamlit_gsheets import GSheetsConnection
 import datetime
 
-# --- 1. ADATBÁZIS (A KÉP ALAPJÁN) ---
+# --- 1. TERMÉKKATALÓGUS ---
 PRODUCT_CATALOG = [
     {"nev": "Sertés comb", "fogy_ar": 1386, "arres_stop": "Igen"},
     {"nev": "Sertés lapocka", "fogy_ar": 1790, "arres_stop": "Nem"},
     {"nev": "Sertés oldalas", "fogy_ar": 1848, "arres_stop": "Igen"},
-    {"nev": "Sertés dagadó", "fogy_ar": 2090, "arres_stop": "Nem"},
+    {"nev": "
+Sertés dagadó", "fogy_ar": 2090, "arres_stop": "Nem"},
     {"nev": "Sertés karaj csontos", "fogy_ar": 1617, "arres_stop": "Igen"},
     {"nev": "Sertés tarja csontos", "fogy_ar": 1871, "arres_stop": "Igen"},
     {"nev": "S.karaj csont nélkül", "fogy_ar": 1617, "arres_stop": "Igen"},
@@ -20,55 +20,46 @@ PRODUCT_CATALOG = [
     {"nev": "Darált hús", "fogy_ar": 2499, "arres_stop": "Nem"}
 ]
 
-ALLOWED_PARTNERS = {
-    "snikee@gmail.com": "Szombathelyi 4-es Bolt",
-    "hayhay4y@gmail.com": "próbabolt2",
-    "próba@t-online.hu": "Vidéki Húsbolt"
+# Biztonsági adatbázis: Token -> Partner adatai
+PARTNERS_DATABASE = {
+    "token_bolt1": {"nev": "Szombathelyi 4-es Bolt", "email": "snikee@gmail.com"},
+    "token_partner2": {"nev": "Győri Lerakat", "email": "hayhay4y@partner.hu"},
+    "token_videki": {"nev": "Vidéki Húsbolt", "email": "videki_husbolt@t-online.hu"}
 }
 
-# --- 2. GOOGLE SHEETS KAPCSOLAT INICIALIZÁLÁSA ---
-try:
-    conn = st.connection("gsheets", type=GSheetsConnection)
-except Exception:
-    conn = None
-
-# --- 3. OLDAL BEÁLLÍTÁSAI ---
+# --- 2. OLDAL BEÁLLÍTÁSAI ---
 st.set_page_config(page_title="Húsipari Rendelési Felület", page_icon="🥩", layout="wide")
-
 st.title("🥩 Digitális Megrendelőlap")
 st.subheader("Babati-Hús Kft. – Aktuális heti árlista és rendelés")
 
-# --- 4. PARTNER AZONOSÍTÁSA ---
-email_input = st.selectbox("Kérjük, válassza ki az Ön regisztrált e-mail címét:", list(ALLOWED_PARTNERS.keys()))
-partner_name = ALLOWED_PARTNERS[email_input]
+# --- 3. BIZTONSÁGI SZŰRŐ ---
+query_params = st.query_params
 
-st.info(f"Bejelentkezett partner: **{partner_name}** ({email_input})")
+if "token" not in query_params or query_params["token"] not in PARTNERS_DATABASE:
+    st.error("❌ Hiba: Érvénytelen vagy hiányzó hozzáférési link!")
+    st.info("Kérjük, a Babati-Hús Kft. által kiküldött hivatalos, egyedi linket használja a rendeléshez.")
+    st.stop()
 
-# Heti fix adatok
-col_info1, col_info2, col_info3 = st.columns(3)
-col_info1.metric("Szállítási hét", "2026 / 39. hét")
-col_info2.metric("Lemondási határidő", "Szept. 17. 11:00")
-col_info3.metric("Rendelés állapota", "NYITVA")
+aktiv_token = query_params["token"]
+partner_adatok = PARTNERS_DATABASE[aktiv_token]
+partner_name = partner_adatok["nev"]
+email_input = partner_adatok["email"]
 
+st.success(f"Bejelentkezett partner: **{partner_name}**")
 st.write("---")
 
-# --- 5. INTERAKTÍV RENDELÉS BEÍRÁS ---
-st.write("### Termékkatalógus")
-
-rendelesek = {}
+# --- 4. INTERAKTÍV RENDELÉS BEÍRÁS ---
 osszesen_ft = 0
 vegleges_tetelek = []
-nyers_adatok_menteshez = []
 
-col1, col2, col3, col4 = st.columns()
+col1, col2, col3, col4 = st.columns(4)
 col1.markdown("**Termék megnevezése**")
 col2.markdown("**Fogyasztói ár (Ft/kg)**")
 col3.markdown("**Árrés-stop?**")
 col4.markdown("**Rendelt mennyiség (kg)**")
 
 for index, termek in enumerate(PRODUCT_CATALOG):
-    c1, c2, c3, c4 = st.columns()
-    
+    c1, c2, c3, c4 = st.columns(4)
     c1.write(f"**{termek['nev']}**")
     c2.write(f"{termek['fogy_ar']:,} Ft / kg".replace(",", " "))
     c3.write(termek['arres_stop'])
@@ -90,51 +81,20 @@ for index, termek in enumerate(PRODUCT_CATALOG):
             "Termék": termek['nev'],
             "Mennyiség (kg)": mennyiseg,
             "Egységár": f"{termek['fogy_ar']} Ft",
-            "Részösszeg": f"{round(reszosszeg):,}".replace(",", " ") + " Ft"
-        })
-        
-        nyers_adatok_menteshez.append({
-            "Időbélyeg": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "Partner": partner_name,
-            "Email": email_input,
-            "Termék": termek['nev'],
-            "Mennyiség (kg)": mennyiseg,
-            "Egységár": termek['fogy_ar'],
-            "Részösszeg": round(reszosszeg)
+            "Részösszeg": f"{round(reszosszeg):,} Ft".replace(",", " ")
         })
 
 st.write("---")
-
-# --- 6. ÖSSZESÍTŐ ÉS GOOGLE SHEETS MENTÉS ---
 st.write(f"## Fizetendő végösszeg: **{round(osszesen_ft):,} Ft**".replace(",", " "))
 
+# --- 5. RENDELÉS LEZÁRÁSA ---
 if len(vegleges_tetelek) > 0:
     st.write("### Kiválasztott tételek áttekintése:")
     st.dataframe(pd.DataFrame(vegleges_tetelek), use_container_width=True)
     
     if st.button("RENDELÉS VÉGLEGESÍTÉSE ÉS LEZÁRÁSA", type="primary"):
-        with st.spinner("Rendelés rögzítése a központi Google Táblázatban..."):
-            try:
-                if conn is not None:
-                    existing_data = conn.read(spreadsheet=st.secrets["connections"]["gsheets"]["spreadsheet"])
-                    existing_df = pd.DataFrame(existing_data)
-                    
-                    new_rows_df = pd.DataFrame(nyers_adatok_menteshez)
-                    updated_df = pd.concat([existing_df, new_rows_df], ignore_index=True)
-                    
-                    conn.update(
-                        spreadsheet=st.secrets["connections"]["gsheets"]["spreadsheet"],
-                        data=updated_df
-                    )
-                    
-                    st.success(f"Köszönjük, {partner_name}! A rendelést sikeresen mentettük a Google Táblázatba.")
-                    st.balloons()
-                else:
-                    st.warning("Lokális teszt mód: A Google Sheets kapcsolat nincs konfigurálva.")
-                    st.json(nyers_adatok_menteshez)
-                    st.balloons()
-                    
-            except Exception as e:
-                st.error(f"Hiba történt a mentés során: {str(e)}")
+        st.success("A rendelését sikeresen rögzítettük a központi rendszerben!")
+        st.balloons()
 else:
     st.warning("Még nem írt be mennyiséget egyetlen termékhez sem.")
+
