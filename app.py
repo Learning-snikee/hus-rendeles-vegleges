@@ -7,8 +7,7 @@ PRODUCT_CATALOG = [
     {"nev": "Sertés comb", "fogy_ar": 1386, "arres_stop": "Igen"},
     {"nev": "Sertés lapocka", "fogy_ar": 1790, "arres_stop": "Nem"},
     {"nev": "Sertés oldalas", "fogy_ar": 1848, "arres_stop": "Igen"},
-    {"nev": "
-Sertés dagadó", "fogy_ar": 2090, "arres_stop": "Nem"},
+    {"nev": "Sertés dagadó", "fogy_ar": 2090, "arres_stop": "Nem"},
     {"nev": "Sertés karaj csontos", "fogy_ar": 1617, "arres_stop": "Igen"},
     {"nev": "Sertés tarja csontos", "fogy_ar": 1871, "arres_stop": "Igen"},
     {"nev": "S.karaj csont nélkül", "fogy_ar": 1617, "arres_stop": "Igen"},
