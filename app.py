@@ -108,7 +108,7 @@ if len(vegleges_tetelek) > 0:
         with st.spinner("Rendelés küldése a központi Google Táblázatba..."):
             try:
                 # 🔴 A 97. SORBAN CSERÉLD KI AZ ALÁBBI LINKET A SAJÁTODRA 🔴
-                GOOGLE_SCRIPT_URL = "IDE_MASOLD_BE_A_GOOGLE_SCRIPT_LINKET"
+                GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxFp8TuLanco8Ic69AamXe-GmoxTundwdV757pcQWgZpFfCKf8aFlfrTiKcPPMqaPA7Dw/exec"
                 
                 response = requests.post(GOOGLE_SCRIPT_URL, json=nyers_adatok_menteshez)
                 
