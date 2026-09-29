@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import datetime
+import requests
+import json
 
 # --- 1. TERMÉKKATALÓGUS ---
 PRODUCT_CATALOG = [
@@ -21,8 +23,8 @@ PRODUCT_CATALOG = [
 
 # Biztonsági adatbázis: Token -> Partner adatai
 PARTNERS_DATABASE = {
-    "token_snikee": {"nev": "Szombathelyi 4-es Bolt", "email": "snikee@gmail.com"},
-    "token_hayhay4y": {"nev": "Győri Lerakat", "email": "hayhay4y@partner.hu"},
+    "token_bolt1": {"nev": "Szombathelyi 4-es Bolt", "email": "bolt1@gmail.com"},
+    "token_partner2": {"nev": "Győri Lerakat", "email": "partner2@partner.hu"},
     "token_videki": {"nev": "Vidéki Húsbolt", "email": "videki_husbolt@t-online.hu"}
 }
 
@@ -50,6 +52,7 @@ st.write("---")
 # --- 4. INTERAKTÍV RENDELÉS BEÍRÁS ---
 osszesen_ft = 0
 vegleges_tetelek = []
+nyers_adatok_menteshez = []
 
 col1, col2, col3, col4 = st.columns(4)
 col1.markdown("**Termék megnevezése**")
@@ -82,18 +85,39 @@ for index, termek in enumerate(PRODUCT_CATALOG):
             "Egységár": f"{termek['fogy_ar']} Ft",
             "Részösszeg": f"{round(reszosszeg):,} Ft".replace(",", " ")
         })
+        
+        nyers_adatok_menteshez.append({
+            "Időbélyeg": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "Partner": partner_name,
+            "Email": email_input,
+            "Termék": termek['nev'],
+            "Mennyiség": mennyiseg,
+            "Egységár": termek['fogy_ar'],
+            "Részösszeg": round(reszosszeg)
+        })
 
 st.write("---")
 st.write(f"## Fizetendő végösszeg: **{round(osszesen_ft):,} Ft**".replace(",", " "))
 
-# --- 5. RENDELÉS LEZÁRÁSA ---
+# --- 5. RENDELÉS LEZÁRÁSA ÉS KÜLDÉSE ---
 if len(vegleges_tetelek) > 0:
     st.write("### Kiválasztott tételek áttekintése:")
     st.dataframe(pd.DataFrame(vegleges_tetelek), use_container_width=True)
     
     if st.button("RENDELÉS VÉGLEGESÍTÉSE ÉS LEZÁRÁSA", type="primary"):
-        st.success("A rendelését sikeresen rögzítettük a központi rendszerben!")
-        st.balloons()
+        with st.spinner("Rendelés küldése a központi Google Táblázatba..."):
+            try:
+                # 🔴 A 97. SORBAN CSERÉLD KI AZ ALÁBBI LINKET A SAJÁTODRA 🔴
+                GOOGLE_SCRIPT_URL = "IDE_MASOLD_BE_A_GOOGLE_SCRIPT_LINKET"
+                
+                response = requests.post(GOOGLE_SCRIPT_URL, json=nyers_adatok_menteshez)
+                
+                if response.status_code == 200:
+                    st.success("A rendelését sikeresen rögzítettük a központi rendszerben!")
+                    st.balloons()
+                else:
+                    st.error("Hiba történt a szerver kapcsolatban, kérjük próbálja újra.")
+            except Exception as e:
+                st.error(f"Hiba történt a mentés során: {str(e)}")
 else:
     st.warning("Még nem írt be mennyiséget egyetlen termékhez sem.")
-
