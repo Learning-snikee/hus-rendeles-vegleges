@@ -25,7 +25,7 @@ PRODUCT_CATALOG = [
 PARTNERS_DATABASE = {
     "token_snikee": {"nev": "Szombathelyi 4-es Bolt", "email": "snikee@gmail.com"},
     "token_hayhay4y": {"nev": "Győri Lerakat", "email": "hayhay4y@partner.hu"},
-    "token_videki": {"nev": "Vidéki Húsbolt", "email": "videki_husbolt@t-online.hu"}
+    "token_pekandras88": {"nev": "Vidéki Húsbolt", "email": "pekandras88@gmail.com"}
 }
 
 # --- 2. OLDAL BEÁLLÍTÁSAI ---
